@@ -1,0 +1,41 @@
+# Dependencies
+app/node_modules/
+
+# Build output
+app/dist/
+app/src-tauri/target/
+
+# Tauri generated schemas
+app/src-tauri/gen/schemas/
+
+# Ollama binaries downloaded by scripts/bundle-ollama.sh — not committed, fetched at build time
+# The Linux stub (ollama-x86_64-unknown-linux-gnu) IS committed for local dev builds on Ubuntu/WSL
+app/src-tauri/binaries/ollama-aarch64-apple-darwin
+app/src-tauri/binaries/ollama-x86_64-apple-darwin
+app/src-tauri/binaries/ollama-x86_64-pc-windows-msvc
+app/src-tauri/binaries/ollama-universal-darwin
+
+# Local database and user data
+*.db
+*.sqlite
+
+# Environment / secrets
+.env
+.env.local
+.env.*
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# AI assistant configs
+.claude/
+.codex/
+
+# Editor
+.vscode/settings.json
+.idea/
+*.swp
+*.mmd
+*.md
+*.xlsx

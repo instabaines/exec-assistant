@@ -1,0 +1,2 @@
+#!/bin/sh
+echo "ollama stub - replace with real binary for this platform"

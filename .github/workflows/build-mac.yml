@@ -1,0 +1,65 @@
+name: Build macOS App
+
+on:
+  push:
+    tags:
+      - "v*"           # triggers on version tags: git tag v1.0.0 && git push --tags
+  workflow_dispatch:   # also triggerable manually from the GitHub Actions UI
+
+jobs:
+  build-mac:
+    runs-on: macos-14   # Apple Silicon runner (M1) — builds universal binary
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: app/package-lock.json
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - name: Cache Rust build
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./app/src-tauri -> target"
+
+      - name: Install frontend dependencies
+        working-directory: app
+        run: npm ci
+
+      - name: Download Ollama binary
+        run: bash scripts/bundle-ollama.sh
+
+      - name: Build macOS app (Apple Silicon)
+        working-directory: app
+        run: npm run tauri build -- --target aarch64-apple-darwin
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build macOS app (Intel)
+        working-directory: app
+        run: npm run tauri build -- --target x86_64-apple-darwin
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Apple Silicon DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: Evo-macos-arm64
+          path: app/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg
+          if-no-files-found: warn
+
+      - name: Upload Intel DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: Evo-macos-x64
+          path: app/src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/*.dmg
+          if-no-files-found: warn
