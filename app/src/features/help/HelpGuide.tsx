@@ -6,7 +6,7 @@ export function HelpGuide() {
         <h2>First-time setup</h2>
 
         <h3>Writing engine</h3>
-        <p>Evo uses <strong>Ollama</strong> (free, local) to generate emails and power the AI assistant. Install it from <code>ollama.com</code>, then pull a model:</p>
+        <p>Exec Assistant AI uses <strong>Ollama</strong> (free, local) to generate emails and power the AI assistant. Install it from <code>ollama.com</code>, then pull a model:</p>
         <pre className="help-code">ollama pull mistral</pre>
         <p>Open <strong>Settings</strong> — the status bar should say <em>"Writing engine connected"</em>. Select your model from the dropdown.</p>
 

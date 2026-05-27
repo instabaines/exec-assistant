@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Evo",
+  "productName": "Exec Assistant AI",
   "version": "1.0.0",
-  "identifier": "com.bits.evo",
+  "identifier": "com.bits.exec-assistant-ai",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Evo — Executive Assistant",
+        "title": "Exec Assistant AI",
         "width": 1280,
         "height": 820,
         "minWidth": 960,

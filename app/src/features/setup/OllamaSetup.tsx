@@ -75,7 +75,7 @@ export function OllamaSetup({ onReady }: Props) {
         <div className="ollama-setup-icon">🧠</div>
         <h1>One-time model setup</h1>
         <p className="ollama-setup-subtitle">
-          Evo uses a local AI model — all processing stays on your device, nothing leaves your machine.
+          Exec Assistant AI uses a local AI model — all processing stays on your device, nothing leaves your machine.
           Choose a model to download now.
         </p>
 
@@ -130,7 +130,7 @@ export function OllamaSetup({ onReady }: Props) {
         {phase === "done" && (
           <div className="ollama-done">
             <div className="ollama-done-check">✓</div>
-            <p>Model ready — launching Evo…</p>
+            <p>Model ready — launching Exec Assistant AI…</p>
           </div>
         )}
       </div>

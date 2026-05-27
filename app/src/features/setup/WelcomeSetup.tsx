@@ -52,8 +52,7 @@ export function WelcomeSetup({ onComplete }: Props) {
     <div className="welcome-shell">
       <div className="welcome-left">
         <div className="welcome-brand">
-          <span className="welcome-brand-name">Evo</span>
-          <span className="welcome-brand-tag">Executive</span>
+          <img src="/src/assets/logo.png" alt="Exec Assistant AI" className="welcome-logo" />
         </div>
         <div className="welcome-pitch">
           <h1>Your private executive assistant.</h1>

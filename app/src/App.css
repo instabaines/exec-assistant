@@ -128,28 +128,17 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .sidebar-brand {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 24px 18px 20px;
+  align-items: center;
+  padding: 18px 18px 16px;
   border-bottom: 1px solid var(--border-soft);
   cursor: pointer;
   user-select: none;
 }
 
-.sidebar-brand-name {
-  font-size: 1.1rem;
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  color: var(--ink-900);
-  line-height: 1;
-}
-
-.sidebar-brand-sub {
-  font-size: 0.65rem;
-  font-weight: 600;
-  color: var(--sidebar-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
+.sidebar-logo {
+  height: 32px;
+  width: auto;
+  display: block;
 }
 
 .sidebar-section {
@@ -3507,23 +3496,14 @@ kbd {
 
 .welcome-brand {
   display: flex;
-  align-items: baseline;
-  gap: 10px;
+  align-items: center;
 }
 
-.welcome-brand-name {
-  font-size: 26px;
-  font-weight: 800;
-  letter-spacing: -.5px;
-  color: #fff;
-}
-
-.welcome-brand-tag {
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.45);
+.welcome-logo {
+  height: 44px;
+  width: auto;
+  /* Invert to white since the left panel is dark */
+  filter: brightness(0) invert(1);
 }
 
 .welcome-pitch {

@@ -934,7 +934,7 @@ export function GenerateAndValidate({
                   rows={9}
                   value={campaignBrief}
                   onChange={(event) => setCampaignBrief(event.target.value)}
-                  placeholder="Example: We are inviting retail operators to consider WorkPlaceByEvo for flexible office space. Keep it persuasive, direct, and premium. Mention that the space is ready to tour and suited for teams that need a polished client-facing environment."
+                  placeholder="Example: We are inviting retail operators to consider WorkPlace for flexible office space. Keep it persuasive, direct, and premium. Mention that the space is ready to tour and suited for teams that need a polished client-facing environment."
                 />
               </label>
             </div>

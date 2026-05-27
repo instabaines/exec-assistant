@@ -327,7 +327,7 @@ function App() {
       help: {
         eyebrow: "Documentation",
         title: "Help & guide",
-        description: "Setup instructions, feature walkthroughs, and tips for getting the most from Evo.",
+        description: "Setup instructions, feature walkthroughs, and tips for getting the most from Exec Assistant AI.",
       },
       contact_detail: {
         eyebrow: "Contacts · 360 view",
@@ -774,8 +774,7 @@ function App() {
     <div className="app-shell sidebar-shell">
       <nav className="sidebar" aria-label="Navigation">
         <div className="sidebar-brand" onClick={() => setActiveScreen("home")}>
-          <span className="sidebar-brand-name">Evo</span>
-          <span className="sidebar-brand-sub">Executive</span>
+          <img src="/src/assets/logo.png" alt="Exec Assistant AI" className="sidebar-logo" />
         </div>
 
         <div className="sidebar-section">

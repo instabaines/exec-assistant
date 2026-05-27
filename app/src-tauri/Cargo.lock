@@ -963,7 +963,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "evo"
+name = "exec-assistant-ai"
 version = "1.0.0"
 dependencies = [
  "lettre",
