@@ -7,7 +7,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BINARIES_DIR="$SCRIPT_DIR/../app/src-tauri/binaries"
-OLLAMA_VERSION="${OLLAMA_VERSION:-v0.7.0}"
+OLLAMA_VERSION="${OLLAMA_VERSION:-v0.24.0}"
 
 mkdir -p "$BINARIES_DIR"
 
