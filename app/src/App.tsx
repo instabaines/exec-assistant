@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { ClientsImport } from "./features/clients/ClientsImport";
 import { GenerateAndValidate } from "./features/generate/GenerateAndValidate";
 import { TemplatesManager } from "./features/templates/TemplatesManager";
@@ -85,6 +86,10 @@ function App() {
   const [currentModel, setCurrentModel] = useState("");
   const [settingsTick, setSettingsTick] = useState(0);
   const [modelSaving, setModelSaving] = useState(false);
+  const [downloadingModel, setDownloadingModel] = useState<string | null>(null);
+  const [downloadPct, setDownloadPct] = useState<number | null>(null);
+  const [downloadPhase, setDownloadPhase] = useState<"idle" | "downloading" | "done" | "error">("idle");
+  const downloadCleanups = useRef<Array<() => void>>([]);
   const [clientCount, setClientCount] = useState(0);
   const [focusedCampaignId, setFocusedCampaignId] = useState("all");
   const [showCreateKnowledge, setShowCreateKnowledge] = useState(false);
@@ -657,6 +662,58 @@ function App() {
     );
   }
 
+  const POPULAR_MODELS = [
+    { id: "gemma4", label: "Gemma 4", description: "Google · Latest Gemma, fast and capable", size: "~3 GB" },
+    { id: "gemma3:4b", label: "Gemma 3 (4B)", description: "Google · Lightweight, great for writing", size: "~2.5 GB" },
+    { id: "llama3.2", label: "LLaMA 3.2 (3B)", description: "Meta · Balanced performance and speed", size: "~2 GB" },
+    { id: "mistral", label: "Mistral 7B", description: "Mistral AI · Excellent for structured writing", size: "~4 GB" },
+    { id: "phi4-mini", label: "Phi-4 Mini", description: "Microsoft · Very compact, fast responses", size: "~2.5 GB" },
+  ];
+
+  async function downloadModel(model: string) {
+    downloadCleanups.current.forEach((fn) => fn());
+    downloadCleanups.current = [];
+    setDownloadingModel(model);
+    setDownloadPct(null);
+    setDownloadPhase("downloading");
+
+    function cleanup() {
+      downloadCleanups.current.forEach((fn) => fn());
+      downloadCleanups.current = [];
+    }
+
+    const unlistenProgress = await listen<{ status: string; total?: number; completed?: number }>(
+      "ollama-pull-progress",
+      (e) => {
+        const { total, completed } = e.payload;
+        if (total && completed) setDownloadPct(Math.round((completed / total) * 100));
+      },
+    );
+    downloadCleanups.current.push(unlistenProgress);
+
+    const unlistenComplete = await listen<string>("ollama-pull-complete", (e) => {
+      setDownloadPhase("done");
+      setAvailableModels((prev) => (prev.includes(e.payload) ? prev : [...prev, e.payload]));
+      setCurrentModel((prev) => prev || e.payload);
+      cleanup();
+      setTimeout(() => { setDownloadingModel(null); setDownloadPhase("idle"); }, 1500);
+    });
+    downloadCleanups.current.push(unlistenComplete);
+
+    const unlistenError = await listen<string>("ollama-pull-error", () => {
+      setDownloadPhase("error");
+      cleanup();
+    });
+    downloadCleanups.current.push(unlistenError);
+
+    try {
+      await invoke("pull_ollama_model", { model });
+    } catch {
+      setDownloadPhase("error");
+      cleanup();
+    }
+  }
+
   function renderSettingsScreen() {
     return (
       <>
@@ -706,6 +763,62 @@ function App() {
             {ollamaStatus.message}
           </div>
         </section>
+
+        {(() => {
+          const notInstalled = POPULAR_MODELS.filter((m) => !availableModels.includes(m.id));
+          if (notInstalled.length === 0) return null;
+          return (
+            <section className="panel settings-section">
+              <div className="settings-section-header">
+                <h3>Model library</h3>
+                <p>Download additional AI models. Once installed they appear in the Active model selector above.</p>
+              </div>
+              <div className="model-library-list">
+                {notInstalled.map((m) => (
+                  <div key={m.id} className="model-library-row">
+                    <div className="model-library-info">
+                      <strong>{m.label}</strong>
+                      <span className="model-library-desc">{m.description}</span>
+                      <span className="model-library-size">{m.size}</span>
+                    </div>
+                    {downloadingModel === m.id ? (
+                      <div className="model-library-progress">
+                        {downloadPhase === "downloading" && (
+                          <>
+                            <div className="ollama-progress-bar model-library-bar">
+                              <div
+                                className="ollama-progress-fill"
+                                style={{ width: downloadPct !== null ? `${downloadPct}%` : "5%" }}
+                              />
+                            </div>
+                            <span className="model-library-pct">
+                              {downloadPct !== null ? `${downloadPct}%` : "Starting…"}
+                            </span>
+                          </>
+                        )}
+                        {downloadPhase === "done" && <span className="model-library-done">✓ Installed</span>}
+                        {downloadPhase === "error" && (
+                          <button type="button" className="secondary-button" onClick={() => downloadModel(m.id)}>
+                            Retry
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={() => downloadModel(m.id)}
+                        disabled={downloadingModel !== null}
+                      >
+                        Download
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          );
+        })()}
 
         <KnowledgeBase />
         <EmailSettings />

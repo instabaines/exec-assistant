@@ -3268,6 +3268,74 @@ kbd {
 .settings-status-line.loading { color: var(--ink-300); }
 
 /* ══════════════════════════════════════════════
+   MODEL LIBRARY
+══════════════════════════════════════════════ */
+
+.model-library-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.model-library-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.model-library-row:last-child { border-bottom: none; }
+
+.model-library-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.model-library-info strong {
+  font-size: 0.875rem;
+  color: var(--ink-900);
+}
+
+.model-library-desc {
+  font-size: 0.8rem;
+  color: var(--ink-400);
+}
+
+.model-library-size {
+  font-size: 0.75rem;
+  color: var(--ink-300);
+}
+
+.model-library-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 160px;
+}
+
+.model-library-bar {
+  flex: 1;
+  height: 6px;
+}
+
+.model-library-pct {
+  font-size: 0.75rem;
+  color: var(--ink-400);
+  white-space: nowrap;
+}
+
+.model-library-done {
+  font-size: 0.8rem;
+  color: var(--success);
+  font-weight: 600;
+}
+
+/* ══════════════════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════════════════ */
 
@@ -3647,4 +3715,22 @@ kbd {
   .welcome-left { padding: 32px 28px; min-height: auto; }
   .welcome-pitch h1 { font-size: 24px; }
   .welcome-right { padding: 32px 20px; }
+}
+
+/* ── Assistant label above bubbles ───────────────────────────────────────────── */
+.chat-assistant-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-300);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  display: block;
+}
+
+/* ── Ollama setup logo ───────────────────────────────────────────────────────── */
+.ollama-setup-logo {
+  height: 40px;
+  width: auto;
+  margin-bottom: 8px;
 }

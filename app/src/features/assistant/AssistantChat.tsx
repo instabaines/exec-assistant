@@ -6,6 +6,14 @@ type Message = {
   content: string;
 };
 
+type Settings = {
+  sender_name: string;
+  sender_company: string;
+  model: string;
+  default_system_prompt: string;
+  sender_position: string;
+};
+
 type Props = {
   model: string;
 };
@@ -19,12 +27,29 @@ const STARTERS = [
   "Draft a follow-up for my most stale deal.",
 ];
 
+function deriveAssistantName(name: string, company: string): string {
+  if (company.trim()) return `${company.trim()} Assistant`;
+  if (name.trim()) return `${name.trim().split(" ")[0]}'s Assistant`;
+  return "Your Assistant";
+}
+
+function friendlyError(assistantName: string): string {
+  return `I'm not able to reach the AI engine right now. Please make sure Ollama is running and try again in a moment.\n\n— ${assistantName}`;
+}
+
 export function AssistantChat({ model }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [assistantName, setAssistantName] = useState("Your Assistant");
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    invoke<Settings>("get_generation_settings")
+      .then((s) => setAssistantName(deriveAssistantName(s.sender_name, s.sender_company)))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -47,8 +72,8 @@ export function AssistantChat({ model }: Props) {
         history: messages,
       });
       setMessages([...next, { role: "assistant", content: reply.trim() }]);
-    } catch (e) {
-      setMessages([...next, { role: "assistant", content: `Sorry, something went wrong: ${String(e)}` }]);
+    } catch {
+      setMessages([...next, { role: "assistant", content: friendlyError(assistantName) }]);
     } finally {
       setLoading(false);
       setTimeout(() => inputRef.current?.focus(), 50);
@@ -68,8 +93,8 @@ export function AssistantChat({ model }: Props) {
         {messages.length === 0 && (
           <div className="chat-empty">
             <div className="chat-empty-icon">✦</div>
-            <h3>Ask anything about your workspace</h3>
-            <p>Your tasks, deals, meetings, outreach, and contacts are all available.</p>
+            <h3>{assistantName}</h3>
+            <p>Ask anything about your workspace — tasks, deals, meetings, contacts, and outreach.</p>
             <div className="chat-starters">
               {STARTERS.map((s) => (
                 <button key={s} type="button" className="chat-starter-chip" onClick={() => send(s)}>
@@ -82,6 +107,9 @@ export function AssistantChat({ model }: Props) {
 
         {messages.map((m, i) => (
           <div key={i} className={`chat-bubble-row ${m.role}`}>
+            {m.role === "assistant" && (
+              <span className="chat-assistant-label">{assistantName}</span>
+            )}
             <div className={`chat-bubble ${m.role}`}>
               <MessageContent content={m.content} />
             </div>
@@ -90,6 +118,7 @@ export function AssistantChat({ model }: Props) {
 
         {loading && (
           <div className="chat-bubble-row assistant">
+            <span className="chat-assistant-label">{assistantName}</span>
             <div className="chat-bubble assistant loading">
               <span className="chat-typing-dot" />
               <span className="chat-typing-dot" />
@@ -118,7 +147,7 @@ export function AssistantChat({ model }: Props) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKey}
-            placeholder="Ask about your workspace… (Enter to send, Shift+Enter for new line)"
+            placeholder={`Ask ${assistantName}… (Enter to send, Shift+Enter for new line)`}
             rows={2}
             disabled={loading}
             autoFocus
@@ -139,7 +168,6 @@ export function AssistantChat({ model }: Props) {
 }
 
 function MessageContent({ content }: { content: string }) {
-  // Render markdown-ish: bold, bullets, line breaks
   const lines = content.split("\n");
   return (
     <div className="chat-message-content">
@@ -158,8 +186,10 @@ function MessageContent({ content }: { content: string }) {
 function renderInline(text: string): React.ReactNode {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
   return parts.map((part, i) =>
-    part.startsWith("**") && part.endsWith("**")
-      ? <strong key={i}>{part.slice(2, -2)}</strong>
-      : part
+    part.startsWith("**") && part.endsWith("**") ? (
+      <strong key={i}>{part.slice(2, -2)}</strong>
+    ) : (
+      part
+    ),
   );
 }

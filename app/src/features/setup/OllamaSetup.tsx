@@ -6,132 +6,125 @@ type PullProgress = {
   status: string;
   total?: number;
   completed?: number;
-  digest?: string;
 };
 
 type Props = {
   onReady: (model: string) => void;
 };
 
-const RECOMMENDED_MODELS = [
-  { id: "mistral", label: "Mistral 7B", size: "4.1 GB", note: "Recommended — best quality/speed balance" },
-  { id: "llama3.2", label: "Llama 3.2 3B", size: "2.0 GB", note: "Faster, lighter, good for most tasks" },
-  { id: "phi3", label: "Phi-3 Mini", size: "2.3 GB", note: "Very fast, lower memory usage" },
-];
+const DEFAULT_MODEL = "gemma4";
 
 export function OllamaSetup({ onReady }: Props) {
-  const [selected, setSelected] = useState("mistral");
-  const [phase, setPhase] = useState<"pick" | "downloading" | "done">("pick");
+  const [phase, setPhase] = useState<"downloading" | "done" | "error">("downloading");
   const [progress, setProgress] = useState<PullProgress | null>(null);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    const unlisten = listen<PullProgress>("ollama-pull-progress", (event) => {
-      setProgress(event.payload);
-    });
-
-    const unlistenComplete = listen<string>("ollama-pull-complete", (event) => {
-      setPhase("done");
-      setTimeout(() => onReady(event.payload), 800);
-    });
-
-    const unlistenError = listen<string>("ollama-pull-error", (event) => {
-      setError(event.payload);
-      setPhase("pick");
-    });
-
-    return () => {
-      unlisten.then((fn) => fn());
-      unlistenComplete.then((fn) => fn());
-      unlistenError.then((fn) => fn());
-    };
-  }, [onReady]);
+  const [retrying, setRetrying] = useState(false);
 
   async function startDownload() {
-    setError("");
     setPhase("downloading");
     setProgress(null);
     try {
-      await invoke("pull_ollama_model", { model: selected });
-    } catch (err) {
-      setError(String(err));
-      setPhase("pick");
+      await invoke("pull_ollama_model", { model: DEFAULT_MODEL });
+    } catch {
+      // error comes through the event, not the return value
     }
   }
 
-  const pct = progress?.total && progress.completed
-    ? Math.round((progress.completed / progress.total) * 100)
-    : null;
+  useEffect(() => {
+    const unlistenProgress = listen<PullProgress>("ollama-pull-progress", (e) => {
+      setProgress(e.payload);
+    });
 
-  const statusLabel = progress?.status === "success"
-    ? "Finalising…"
-    : progress?.status?.startsWith("pulling")
-    ? `Downloading${pct !== null ? ` — ${pct}%` : "…"}`
-    : progress?.status ?? "Starting download…";
+    const unlistenComplete = listen<string>("ollama-pull-complete", (e) => {
+      setPhase("done");
+      setTimeout(() => onReady(e.payload), 900);
+    });
+
+    const unlistenError = listen<string>("ollama-pull-error", () => {
+      setPhase("error");
+      setRetrying(false);
+    });
+
+    // Start immediately — no user action required
+    startDownload();
+
+    return () => {
+      unlistenProgress.then((fn) => fn());
+      unlistenComplete.then((fn) => fn());
+      unlistenError.then((fn) => fn());
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function retry() {
+    setRetrying(true);
+    await startDownload();
+  }
+
+  const pct =
+    progress?.total && progress.completed
+      ? Math.round((progress.completed / progress.total) * 100)
+      : null;
+
+  const statusLabel =
+    progress?.status === "success"
+      ? "Finalising…"
+      : progress?.status?.startsWith("pulling")
+      ? `Downloading your AI model${pct !== null ? ` — ${pct}%` : "…"}`
+      : progress?.status
+      ? progress.status
+      : "Connecting to AI engine…";
 
   return (
     <div className="ollama-setup-shell">
       <div className="ollama-setup-card">
-        <div className="ollama-setup-icon">🧠</div>
-        <h1>One-time model setup</h1>
-        <p className="ollama-setup-subtitle">
-          Exec Assistant AI uses a local AI model — all processing stays on your device, nothing leaves your machine.
-          Choose a model to download now.
-        </p>
-
-        {phase === "pick" && (
-          <>
-            <div className="ollama-model-list">
-              {RECOMMENDED_MODELS.map((m) => (
-                <label key={m.id} className={`ollama-model-row${selected === m.id ? " selected" : ""}`}>
-                  <input
-                    type="radio"
-                    name="model"
-                    value={m.id}
-                    checked={selected === m.id}
-                    onChange={() => setSelected(m.id)}
-                  />
-                  <div className="ollama-model-info">
-                    <span className="ollama-model-name">{m.label}</span>
-                    <span className="ollama-model-size">{m.size}</span>
-                  </div>
-                  <span className="ollama-model-note">{m.note}</span>
-                </label>
-              ))}
-            </div>
-
-            {error && <p className="status error">{error}</p>}
-
-            <button type="button" className="primary-button" onClick={startDownload}>
-              Download {RECOMMENDED_MODELS.find((m) => m.id === selected)?.label}
-            </button>
-            <p className="ollama-setup-hint">
-              Download happens once. The model is stored locally and reused on every launch.
-            </p>
-          </>
-        )}
+        <img src="/src/assets/logo.png" alt="Exec Assistant AI" className="ollama-setup-logo" />
 
         {phase === "downloading" && (
-          <div className="ollama-download-progress">
-            <p className="ollama-download-status">{statusLabel}</p>
-            <div className="ollama-progress-bar">
-              <div
-                className="ollama-progress-fill"
-                style={{ width: pct !== null ? `${pct}%` : "0%" }}
-              />
-            </div>
-            {pct !== null && <p className="ollama-progress-pct">{pct}%</p>}
-            <p className="ollama-download-hint">
-              This only happens once — subsequent launches start instantly.
+          <>
+            <h1>Setting up your AI</h1>
+            <p className="ollama-setup-subtitle">
+              Downloading your private AI model — this happens once. Everything runs locally;
+              nothing leaves your device.
             </p>
-          </div>
+            <div className="ollama-download-progress">
+              <p className="ollama-download-status">{statusLabel}</p>
+              <div className="ollama-progress-bar">
+                <div
+                  className="ollama-progress-fill"
+                  style={{ width: pct !== null ? `${pct}%` : "5%" }}
+                />
+              </div>
+              {pct !== null && <p className="ollama-progress-pct">{pct}%</p>}
+              <p className="ollama-download-hint">
+                Subsequent launches start instantly — this step won't repeat.
+              </p>
+            </div>
+          </>
         )}
 
         {phase === "done" && (
           <div className="ollama-done">
             <div className="ollama-done-check">✓</div>
-            <p>Model ready — launching Exec Assistant AI…</p>
+            <p>AI model ready — launching…</p>
           </div>
+        )}
+
+        {phase === "error" && (
+          <>
+            <h1>Download paused</h1>
+            <p className="ollama-setup-subtitle">
+              The AI model couldn't be downloaded. Check your internet connection and try again —
+              the download will resume where it left off.
+            </p>
+            <button
+              type="button"
+              className="primary-button"
+              onClick={retry}
+              disabled={retrying}
+            >
+              {retrying ? "Retrying…" : "Try again"}
+            </button>
+          </>
         )}
       </div>
     </div>
